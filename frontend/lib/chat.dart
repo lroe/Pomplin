@@ -419,11 +419,10 @@ class _ChatScreenState extends State<ChatScreen> {
                     }),
                   ] else ...[
                      // For cyclic nodes or phases without tasks, show description if available
-                     final String desc = (item['description'] ?? "").toString();
-                     if (desc.isNotEmpty && desc != itemTitle)
+                     if ((item['description'] ?? "").toString().isNotEmpty && (item['description'] ?? "").toString() != itemTitle)
                        Padding(
                          padding: const EdgeInsets.only(left: 18, top: 4),
-                         child: Text(desc, style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                         child: Text((item['description'] ?? "").toString(), style: const TextStyle(color: Colors.white60, fontSize: 12)),
                        ),
                   ],
                 ],
