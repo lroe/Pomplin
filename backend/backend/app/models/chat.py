@@ -25,6 +25,7 @@ class ChatMessage(Base):
     role = Column(String, nullable=False)  # "user" or "model"
     content = Column(Text, nullable=False)
     tool_data = Column(JSON, nullable=True)
+    tool_name = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     session = relationship("ChatSession", back_populates="messages")
