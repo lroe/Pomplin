@@ -51,11 +51,25 @@ class _ChatScreenState extends State<ChatScreen> {
       if (history != null && history['messages'] != null) {
         final List<dynamic> msgs = history['messages'];
         setState(() {
-          _messages.addAll(msgs.map((m) => _Message(
-            text: m['content'],
-            isUser: m['role'] == 'user',
-            time: DateTime.parse(m['created_at']),
-          )));
+          _messages.addAll(msgs.map((m) {
+            final toolData = m['tool_data'];
+            final toolName = m['tool_name'];
+            Map<String, dynamic>? roadmap;
+            String? gTitle;
+
+            if (toolName == 'propose_roadmap' && toolData != null) {
+              roadmap = toolData['roadmap'];
+              gTitle = toolData['title'];
+            }
+
+            return _Message(
+              text: m['content'],
+              isUser: m['role'] == 'user',
+              time: DateTime.parse(m['created_at']),
+              roadmapPreview: roadmap,
+              goalTitle: gTitle,
+            );
+          }));
         });
         _scrollToBottom(immediate: true);
       }
@@ -312,7 +326,11 @@ class _ChatScreenState extends State<ChatScreen> {
                       ),
                       if (msg.roadmapPreview != null) ...[
                         const SizedBox(height: 12),
-                        _buildRoadmapPreview(msg.goalTitle ?? "Goal", msg.roadmapPreview!),
+                        _buildRoadmapPreview(
+                          msg.goalTitle ?? "Goal", 
+                          msg.roadmapPreview!,
+                          showConfirm: _messages.where((m) => m.roadmapPreview != null).last == msg
+                        ),
                       ],
                     ],
                   ),
@@ -327,7 +345,7 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
-  Widget _buildRoadmapPreview(String title, Map<String, dynamic> roadmap) {
+  Widget _buildRoadmapPreview(String title, Map<String, dynamic> roadmap, {bool showConfirm = true}) {
     final List<dynamic> items = roadmap['phases'] ?? roadmap['nodes'] ?? [];
     final bool isLinear = roadmap['phases'] != null;
 
@@ -430,22 +448,24 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           }),
 
-          const SizedBox(height: 8),
-          ElevatedButton(
-            onPressed: () {
-              _channel?.sink.add(json.encode({
-                "content": "This roadmap looks perfect! Let's start."
-              }));
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _pink,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 44),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              elevation: 0,
+          if (showConfirm) ...[
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: () {
+                _channel?.sink.add(json.encode({
+                  "content": "This roadmap looks perfect! Let's start."
+                }));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _pink,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 44),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
+              ),
+              child: const Text("Confirm & Start Journey", style: TextStyle(fontWeight: FontWeight.bold)),
             ),
-            child: const Text("Confirm & Start Journey", style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
+          ],
         ],
       ),
     );

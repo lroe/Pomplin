@@ -259,8 +259,14 @@ async def websocket_chat(
                         await db.commit()
                         tool_data = {"status": "deleted"}
 
-                # Save model reply
-                model_msg = ChatMessage(session_id=session.id, role="model", content=reply)
+                # Save model reply (with tool data if any)
+                model_msg = ChatMessage(
+                    session_id=session.id, 
+                    role="model", 
+                    content=reply,
+                    tool_data=tool_data,
+                    tool_name=tool_call["name"] if tool_call else None
+                )
                 db.add(model_msg)
                 await db.commit()
 
@@ -270,11 +276,10 @@ async def websocket_chat(
                 response_payload = {
                     "role": "model", 
                     "content": reply, 
-                    "session_id": session.id
+                    "session_id": session.id,
+                    "tool_result": tool_data,
+                    "tool_name": tool_call["name"] if tool_call else None
                 }
-                if tool_data:
-                    response_payload["tool_result"] = tool_data
-                    response_payload["tool_name"] = tool_call["name"]
 
                 await manager.send_message(response_payload, websocket)
 

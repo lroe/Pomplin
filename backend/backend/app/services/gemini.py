@@ -126,6 +126,13 @@ async def generate_roadmap(goal_description: str, goal_type: str) -> dict:
         return _mock_roadmap(goal_type)
 
     try:
+        safety_settings = [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+        ]
+
         model = genai.GenerativeModel(
             model_name="gemini-2.5-flash",
             system_instruction=ROADMAP_SYSTEM_PROMPT,
@@ -144,6 +151,7 @@ async def generate_roadmap(goal_description: str, goal_type: str) -> dict:
             prompt,
             tools=tools,
             tool_config=tool_config,
+            safety_settings=safety_settings
         )
 
         # Extract function call result
@@ -342,10 +350,18 @@ async def pomplin_chat(
         if memories:
             system += f"\n\nUser's Permanent Memories (Context):\n{memories}\n\nUse these memories to personalize your advice. If the user asks you to forget something, use the delete_memory tool with the appropriate ID."
 
+        safety_settings = [
+            {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+            {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+        ]
+
         model = genai.GenerativeModel(
             model_name="gemini-2.5-flash",
             system_instruction=system,
-            tools=CHAT_TOOLS
+            tools=CHAT_TOOLS,
+            safety_settings=safety_settings
         )
 
         chat = model.start_chat(history=history)

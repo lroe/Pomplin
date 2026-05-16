@@ -6,6 +6,8 @@ from datetime import datetime
 class ChatMessageSchema(BaseModel):
     role: str
     content: str
+    tool_data: Optional[dict] = None
+    tool_name: Optional[str] = None
     created_at: Optional[datetime] = None
     model_config = ConfigDict(from_attributes=True)
 
@@ -31,3 +33,5 @@ class WSOutgoingMessage(BaseModel):
     role: str
     content: str
     session_id: int
+    tool_data: Optional[dict] = None
+    tool_name: Optional[str] = None
