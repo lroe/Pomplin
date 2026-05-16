@@ -398,7 +398,7 @@ class _ChatScreenState extends State<ChatScreen> {
                           Expanded(
                             child: Text(
                               task['title'] ?? "",
-                              style: const TextStyle(color: Colors.whiteb0, fontSize: 13),
+                              style: const TextStyle(color: Colors.white70, fontSize: 13),
                             ),
                           ),
                         ],
