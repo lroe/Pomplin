@@ -22,6 +22,7 @@ from app.models.chat import ChatSession, ChatMessage
 from app.models.goal import Goal
 from app.models.user import User
 from app.models.memory import UserMemory
+from app.models.task import Task
 from app.schemas.chat import (
     ChatSessionSchema, ChatSessionWithMessages, ChatMessageSchema, WSOutgoingMessage
 )
