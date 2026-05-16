@@ -239,6 +239,7 @@ Goal Creation Rules:
 - When a user states a new goal, DO NOT immediately call `propose_roadmap`.
 - First, ASK QUESTIONS (one or two at a time) to gather context! Find out their current experience level, timeline, and specific needs.
 - After gathering sufficient information (usually after 1-2 questions), call `propose_roadmap` to present a draft plan.
+- CRITICAL: When calling `propose_roadmap`, ensure every phase has a clear `title` and a list of at least 2-3 specific `tasks`. Each task must have a `title`. Do not leave these empty or generic.
 - NEVER end a message without either asking a follow-up question or presenting a roadmap/next step. This is critical for keeping the user engaged.
 """
 

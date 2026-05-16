@@ -365,7 +365,8 @@ class _ChatScreenState extends State<ChatScreen> {
           ...items.take(10).map((item) {
             if (item is! Map) return const SizedBox();
             
-            final String itemTitle = (item['title'] ?? item['label'] ?? "Step").toString();
+            // AI might use 'title', 'label', or 'name'
+            final String itemTitle = (item['title'] ?? item['label'] ?? item['name'] ?? item['description'] ?? "Step").toString();
             final dynamic tasksData = item['tasks'];
             final List<dynamic> tasks = (tasksData is List) ? tasksData : [];
             
@@ -393,7 +394,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   if (tasks.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     ...tasks.map((task) {
-                      if (task is! Map) return const SizedBox();
+                      if (task is! Map) {
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 18, bottom: 4),
+                          child: Text("- ${task.toString()}", style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                        );
+                      }
+                      final String taskTitle = (task['title'] ?? task['name'] ?? task['description'] ?? "Activity").toString();
                       return Padding(
                         padding: const EdgeInsets.only(left: 18, bottom: 4),
                         child: Row(
@@ -402,7 +409,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                (task['title'] ?? "").toString(),
+                                taskTitle,
                                 style: const TextStyle(color: Colors.white70, fontSize: 13),
                               ),
                             ),
@@ -410,13 +417,14 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       );
                     }),
-                  ] else if (!isLinear) ...[
-                     // For cyclic nodes that don't have subtasks
-                     const SizedBox(height: 4),
-                     Padding(
-                       padding: const EdgeInsets.only(left: 18),
-                       child: Text((item['description'] ?? "").toString(), style: const TextStyle(color: Colors.white60, fontSize: 12)),
-                     ),
+                  ] else ...[
+                     // For cyclic nodes or phases without tasks, show description if available
+                     final String desc = (item['description'] ?? "").toString();
+                     if (desc.isNotEmpty && desc != itemTitle)
+                       Padding(
+                         padding: const EdgeInsets.only(left: 18, top: 4),
+                         child: Text(desc, style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                       ),
                   ],
                 ],
               ),
