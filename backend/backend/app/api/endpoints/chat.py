@@ -105,24 +105,27 @@ async def websocket_chat(
             for msg in history_rows
         ]
 
-        # Build goal context string if applicable
-        goal_context = None
-        if goal_id:
-            goal_result = await db.execute(
-                select(Goal).where(Goal.id == goal_id, Goal.user_id == user.id)
-            )
-            goal = goal_result.scalar_one_or_none()
-            if goal:
-                goal_context = (
-                    f"Goal: {goal.title}\n"
-                    f"Description: {goal.description}\n"
-                    f"Type: {goal.goal_type.value}\n"
-                    f"Roadmap summary: {json.dumps(goal.roadmap)[:500] if goal.roadmap else 'Not generated yet'}"
-                )
+        # Build context
+        all_goals_res = await db.execute(select(Goal).where(Goal.user_id == user.id))
+        all_goals = all_goals_res.scalars().all()
+        has_goals = len(all_goals) > 0
+        
+        context_parts = []
+        if all_goals:
+            context_parts.append("User's Goals:")
+            for g in all_goals:
+                context_parts.append(f"- ID: {g.id}, Title: {g.title}")
+        
+        from datetime import date
+        t_res = await db.execute(select(Task).where(Task.user_id == user.id, Task.date == date.today()))
+        today_tasks = t_res.scalars().all()
+        if today_tasks:
+            context_parts.append("\nToday's Tasks:")
+            for t in today_tasks:
+                status = "Done" if t.completed else "Pending"
+                context_parts.append(f"- {t.title}: {status}")
 
-        # Check if user has any goals
-        goals_check = await db.execute(select(Goal).where(Goal.user_id == user.id))
-        has_goals = goals_check.scalar_one_or_none() is not None
+        goal_context = "\n".join(context_parts) if context_parts else "No goals yet."
 
         # Send greeting on new session
         if not history_rows:
@@ -171,6 +174,28 @@ async def websocket_chat(
 
                 # Update history
                 gemini_history.append({"role": "user", "parts": [{"text": user_content}]})
+
+                # Refresh context on every message
+                all_goals_res = await db.execute(select(Goal).where(Goal.user_id == user.id))
+                all_goals = all_goals_res.scalars().all()
+                has_goals = len(all_goals) > 0
+                
+                context_parts = []
+                if all_goals:
+                    context_parts.append("User's Current Goals:")
+                    for g in all_goals:
+                        context_parts.append(f"- ID: {g.id}, Title: {g.title}, Roadmap: {json.dumps(g.roadmap)[:500] if g.roadmap else 'N/A'}")
+                
+                from datetime import date
+                t_res = await db.execute(select(Task).where(Task.user_id == user.id, Task.date == date.today()))
+                today_tasks = t_res.scalars().all()
+                if today_tasks:
+                    context_parts.append("\nToday's Progress:")
+                    for t in today_tasks:
+                        status = "DONE" if t.completed else "PENDING"
+                        context_parts.append(f"- {t.title}: {status}")
+
+                goal_context = "\n".join(context_parts) if context_parts else "No goals recorded."
 
                 # Fetch User Memories
                 mem_result = await db.execute(select(UserMemory).where(UserMemory.user_id == user.id))
