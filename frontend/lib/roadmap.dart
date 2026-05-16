@@ -30,7 +30,9 @@ class RoadmapPhase {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 class RoadmapScreen extends StatefulWidget {
-  const RoadmapScreen({super.key});
+  final Map<String, dynamic>? draftGoal;
+  final String? draftTitle;
+  const RoadmapScreen({super.key, this.draftGoal, this.draftTitle});
 
   @override
   State<RoadmapScreen> createState() => _RoadmapScreenState();
@@ -43,6 +45,7 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
   bool _isLoading = true;
   List<dynamic> _goals = [];
   List<RoadmapPhase> _phases = [];
+  bool _isPreviewMode = false;
 
   // ── Palette ────────────────────────────────────────────────────────────────
   static const Color _bg = Color(0xFF0D0D0D);
@@ -55,7 +58,23 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchGoals();
+    if (widget.draftGoal != null) {
+      _setupPreview();
+    } else {
+      _fetchGoals();
+    }
+  }
+
+  void _setupPreview() {
+    setState(() {
+      _isPreviewMode = true;
+      _isLoading = false;
+      _goals = [{
+        'title': widget.draftTitle ?? 'Draft Plan',
+        'roadmap': widget.draftGoal,
+      }];
+      _parseRoadmap(_goals[0]);
+    });
   }
 
   Future<void> _fetchGoals() async {
@@ -72,24 +91,39 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
 
   void _parseRoadmap(Map<String, dynamic> goal) {
     final roadmap = goal['roadmap'];
-    if (roadmap == null || roadmap['phases'] == null) {
+    if (roadmap == null || (roadmap['phases'] == null && roadmap['nodes'] == null)) {
       _phases = [];
       return;
     }
 
-    final List<dynamic> phasesJson = roadmap['phases'];
-    _phases = phasesJson.map((p) {
-      final List<dynamic> tasksJson = p['tasks'] ?? [];
-      return RoadmapPhase(
-        label: p['label'] ?? "Phase",
-        status: _determineStatus(p['status']),
-        tasks: tasksJson.map((t) => RoadmapTask(
-          title: t['title'] ?? "",
-          done: t['done'] ?? false,
-          mascotAsset: t['done'] == true ? 'assets/pomplin_completed.png' : 'assets/pomplin_active.png',
-        )).toList(),
-      );
-    }).toList();
+    if (roadmap['phases'] != null) {
+      final List<dynamic> phasesJson = roadmap['phases'];
+      _phases = phasesJson.map((p) {
+        final List<dynamic> tasksJson = p['tasks'] ?? [];
+        return RoadmapPhase(
+          label: p['label'] ?? p['title'] ?? "Phase",
+          status: _determineStatus(p['status']),
+          tasks: tasksJson.map((t) => RoadmapTask(
+            title: t['title'] ?? "",
+            done: t['done'] ?? false,
+            mascotAsset: t['done'] == true ? 'assets/pomplin_completed.png' : 'assets/pomplin_active.png',
+          )).toList(),
+        );
+      }).toList();
+    } else if (roadmap['nodes'] != null) {
+       final List<dynamic> nodesJson = roadmap['nodes'];
+       _phases = [
+         RoadmapPhase(
+           label: "RECURRING HABITS",
+           status: PhaseStatus.active,
+           tasks: nodesJson.map((n) => RoadmapTask(
+             title: n['title'] ?? "",
+             done: false,
+             mascotAsset: 'assets/pomplin_active.png',
+           )).toList(),
+         )
+       ];
+    }
   }
 
   PhaseStatus _determineStatus(String? status) {
@@ -124,6 +158,23 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if (_isPreviewMode)
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.amberAccent.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.amberAccent.withOpacity(0.3)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.visibility, color: Colors.amberAccent, size: 16),
+                            SizedBox(width: 8),
+                            Text("PREVIEW MODE", style: TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold, fontSize: 12)),
+                          ],
+                        ),
+                      ),
                     _buildGoalChips(),
                     const SizedBox(height: 22),
                     _buildJourneyHeader(),
@@ -134,6 +185,22 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: _buildPhaseCard(p),
                         )),
+                    if (_isPreviewMode) ...[
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: () {
+                          // Signal confirmation back to chat or home
+                          Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const ChatScreen()));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _pink,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        child: const Text("I LIKE THIS PLAN - START JOURNEY"),
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     _buildPomplinSaysCard(),
                     const SizedBox(height: 20),

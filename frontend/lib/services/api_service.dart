@@ -80,4 +80,36 @@ class ApiService {
       Uri.parse('$wsUrl/ws/chat?token=TOKEN_PLACEHOLDER&goal_id=${goalId ?? ""}&session_id=${sessionId ?? ""}'),
     );
   }
+
+  Future<List<dynamic>> getChatSessions() async {
+    final token = await getToken();
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/chat/sessions'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+    } catch (e) {
+      print("Get chat sessions error: $e");
+    }
+    return [];
+  }
+
+  Future<Map<String, dynamic>?> getChatHistory(int sessionId) async {
+    final token = await getToken();
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/chat/sessions/$sessionId'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      }
+    } catch (e) {
+      print("Get chat history error: $e");
+    }
+    return null;
+  }
 }
