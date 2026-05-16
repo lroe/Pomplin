@@ -1,0 +1,14 @@
+venv/
+.env
+__pycache__/
+*.pyc
+.DS_Store
+build/
+ios/
+android/
+.dart_tool/
+.packages
+pubspec.lock
+.metadata
+.flutter-plugins
+.flutter-plugins-dependencies
