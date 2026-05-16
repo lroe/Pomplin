@@ -54,6 +54,7 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
   static const Color _grey = Color(0xFF888888);
   static const Color _yellowGreen = Color(0xFFBDD446);
   static const Color _green = Color(0xFF8BC34A);
+  static const Color _pink  = Color(0xFFD4607A);
 
   @override
   void initState() {
