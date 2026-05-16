@@ -363,8 +363,11 @@ class _ChatScreenState extends State<ChatScreen> {
           
           // Render Phases/Tasks
           ...items.take(10).map((item) {
-            final String itemTitle = item['title'] ?? item['label'] ?? "Step";
-            final List<dynamic> tasks = item['tasks'] ?? [];
+            if (item is! Map) return const SizedBox();
+            
+            final String itemTitle = (item['title'] ?? item['label'] ?? "Step").toString();
+            final dynamic tasksData = item['tasks'];
+            final List<dynamic> tasks = (tasksData is List) ? tasksData : [];
             
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
@@ -389,27 +392,30 @@ class _ChatScreenState extends State<ChatScreen> {
                   ),
                   if (tasks.isNotEmpty) ...[
                     const SizedBox(height: 8),
-                    ...tasks.map((task) => Padding(
-                      padding: const EdgeInsets.only(left: 18, bottom: 4),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.radio_button_unchecked, color: Colors.white24, size: 12),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              task['title'] ?? "",
-                              style: const TextStyle(color: Colors.white70, fontSize: 13),
+                    ...tasks.map((task) {
+                      if (task is! Map) return const SizedBox();
+                      return Padding(
+                        padding: const EdgeInsets.only(left: 18, bottom: 4),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.radio_button_unchecked, color: Colors.white24, size: 12),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                (task['title'] ?? "").toString(),
+                                style: const TextStyle(color: Colors.white70, fontSize: 13),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    )),
+                          ],
+                        ),
+                      );
+                    }),
                   ] else if (!isLinear) ...[
                      // For cyclic nodes that don't have subtasks
                      const SizedBox(height: 4),
                      Padding(
                        padding: const EdgeInsets.only(left: 18),
-                       child: Text(item['description'] ?? "", style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                       child: Text((item['description'] ?? "").toString(), style: const TextStyle(color: Colors.white60, fontSize: 12)),
                      ),
                   ],
                 ],
